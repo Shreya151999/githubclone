@@ -20,3 +20,5 @@ CSS
 JavaScript
 Bootstrap (v4.3.1)
 jQuery (v3.3.1)
+
+Website is hosted via Netlify: https://65a9177c06c87709d7ead267--melodic-rolypoly-c037e1.netlify.app/
