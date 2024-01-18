@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Repository Viewer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        #userProfile {
+            text-align: center;
+        }
+
+        #userProfile img {
+            border-radius: 50%;
+        }
+
+        #userProfile p {
+            margin-bottom: 5px;
+        }
+
+        #userProfile .location {
+            color: #777;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #userProfile .location i {
+            margin-right: 5px;
+        }
+
+        .repo-card {
+            margin-bottom: 20px;
+        }
+
+        .repo-card .card-title {
+            color: #007bff;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <div class="container">
+        <h1 class="mt-4 mb-4">GitHub Repository Viewer</h1>
+
+        <div id="userProfile">
+            <h2>John's GitHub Profile</h2>
+            <img src="C:/Users/seshwaris/Desktop/github/download.jpg" alt="John's Profile Picture" style="width: 100px; height: 100px;">
+            <p>Email: john@example.com</p>
+            <p>Bio: Aspiring Web Developer</p>
+            <p>Location: Bengaluru, India</p>
+            <p>Twitter: <a href="https://twitter.com/sample_twitter" target="_blank">@sample_twitter</a></p>
+            <p>GitHub: <i class="fas fa-link"></i> <a href="https://github.com/john" target="_blank">https://github.com/john</a></p>
+        </div>
+
+        <div id="searchBar" class="mb-4">
+            <label for="search">Search Repositories:</label>
+            <input type="text" id="search" class="form-control" placeholder="Enter repository name" oninput="filterRepositories()">
+        </div>
+
+        <div id="repoList" class="mt-4">
+            <!-- Repositories will be dynamically added here -->
+        </div>
+
+        <div id="pagination" class="mt-4">
+            <label for="perPage">Repositories per page:</label>
+            <select id="perPage" class="form-control" onchange="loadRepositories()">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item" id="prevPage">
+                        <a class="page-link" href="#" aria-label="Previous" onclick="changePage(-1)">
+                            <span aria-hidden="true">&laquo; Previous</span>
+                        </a>
+                    </li>
+                    <li class="page-item" id="nextPage">
+                        <a class="page-link" href="#" aria-label="Next" onclick="changePage(1)">
+                            <span aria-hidden="true">Next &raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div id="loader" class="loader"></div>
+
+    </div>
+
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    <script>
+        var perPage = 10; // Default repositories per page
+        var currentPage = 1; // Default current page
+        var searchTerm = ""; // Default search term
+
+        $(document).ready(function () {
+            // Initial load
+            loadRepositories();
+
+            // Handle change in repositories per page
+            $("#perPage").change(function () {
+                perPage = parseInt($(this).val(), 10);
+                currentPage = 1;
+                loadRepositories();
+            });
+        });
+
+        function loadRepositories() {
+            var username = "john"; // Replace with the actual username
+            var apiUrl = `https://api.github.com/users/${username}/repos?page=${currentPage}&per_page=${perPage}&q=${searchTerm}+repo:${searchTerm}`;
+
+            // Show loader
+            $("#loader").show();
+
+            $.getJSON(apiUrl, function (repos) {
+                displayRepositories(repos);
+            }).always(function () {
+                // Hide loader after API call is complete (success or failure)
+                $("#loader").hide();
+            });
+        }
+
+        function displayRepositories(repos) {
+            // Display repositories
+            var repoList = repos.map(function (repo) {
+                return `
+                    <div class="card repo-card">
+                        <div class="card-body">
+                            <h5 class="card-title">${repo.name}</h5>
+                            <p class="card-text">${repo.description || "No description available"}</p>
+                            <p class="card-text"><strong>Topics: </strong>${repo.topics ? repo.topics.join(", ") : "No topics"}</p>
+                            <a href="${repo.html_url}" class="btn btn-primary" target="_blank">View on GitHub</a>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            $("#repoList").html(repoList);
+
+            // Enable/disable pagination buttons based on current page
+            $("#prevPage").toggleClass("disabled", currentPage === 1);
+            $("#nextPage").toggleClass("disabled", repos.length < perPage);
+        }
+
+        function changePage(offset) {
+            if (currentPage + offset >= 1) {
+                currentPage += offset;
+                loadRepositories();
+            }
+        }
+
+        function filterRepositories() {
+            searchTerm = $("#search").val().trim();
+            currentPage = 1;
+            loadRepositories();
+        }
+    </script>
+
+</body>
+</html>
